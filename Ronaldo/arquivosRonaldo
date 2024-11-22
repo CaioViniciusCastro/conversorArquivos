@@ -1,1 +1,132 @@
+//main.js:
 
+//Este arquivo é responsável por criar a janela principal do aplicativo e gerenciar a comunicação com o front-end.
+//Recebendo comandos do front-end (por exemplo, pedir para converter um arquivo) e repassar para os módulos que fazem a conversão.
+
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const path = require('path');
+
+let mainWindow;
+
+app.on('ready', () => {
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+
+    mainWindow.loadFile('index.html');
+
+    // Gerencia a seleção de arquivos
+    ipcMain.handle('select-files', async () => {
+        const result = await dialog.showOpenDialog(mainWindow, {
+            properties: ['openFile', 'multiSelections']
+        });
+        return result.filePaths;
+    });
+
+    ipcMain.handle('select-folder', async () => {
+        const result = await dialog.showOpenDialog(mainWindow, {
+            properties: ['openDirectory']
+        });
+        return result.filePaths[0];
+    });
+});
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+});
+
+
+
+const { convertImage } = require('./converters/imageConverter');
+const { convertAudio } = require('./converters/audioConverter');
+const { convertDocxToPdf } = require('./converters/documentConverter');
+
+ipcMain.handle('convert-image', async (event, inputPath, outputPath) => {
+    await convertImage(inputPath, outputPath);
+});
+
+ipcMain.handle('convert-audio', async (event, inputPath, outputPath) => {
+    await convertAudio(inputPath, outputPath);
+});
+
+ipcMain.handle('convert-document', async (event, inputPath, outputPath) => {
+    await convertDocxToPdf(inputPath, outputPath);
+});
+
+//main.js: Gerencia a janela e a comunicação entre front-end e conversores.
+//index.html: Mostra os botões e a interface.
+//renderer.js: Conecta os botões à lógica de conversão.
+//Conversores: Fazem o trabalho pesado de transformar os arquivos.
+
+
+//Conversores:
+
+//Converte o MP3 para WAV 
+
+const { exec } = require('child_process');
+
+function convertAudio(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        exec(`ffmpeg -i "${inputPath}" "${outputPath}"`, (error) => {
+            if (error) return reject(error);
+            resolve();
+        });
+    });
+}
+
+module.exports = { convertAudio };
+
+
+//Converte o JPEG para PNG
+const sharp = require('sharp');
+
+async function convertImage(inputPath, outputPath) {
+    await sharp(inputPath).toFormat('png').toFile(outputPath);
+}
+
+module.exports = { convertImage };
+
+
+//Converte documento DOCX em PDF
+
+const { PDFDocument } = require('pdf-lib');
+const fs = require('fs');
+
+async function convertDocxToPdf(inputPath, outputPath) {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage();
+    page.drawText('Exemplo de conversão. Integre com bibliotecas específicas.');
+    const pdfBytes = await pdfDoc.save();
+    fs.writeFileSync(outputPath, pdfBytes);
+}
+
+module.exports = { convertDocxToPdf };
+
+
+//render.js:
+
+//Este arquivo conecta a interface (index.html) ao processo principal (main.js)
+//Escuta os cliques nos botões da interfac
+//Envia pedidos ao processo principal (como selecionar arquivos ou converter algo)
+//Exibe os resultados na interface, se necessário
+
+const { ipcRenderer } = require('electron');
+
+document.getElementById('COLOQUEOID').addEventListener('click', async () => {
+    const files = await ipcRenderer.invoke('COLOQUEOID');
+    console.log('Arquivos selecionados:', files);
+});
+
+document.getElementById('COLOQUEOID').addEventListener('click', async () => {
+    const folder = await ipcRenderer.invoke('COLOQUEOID');
+    console.log('Pasta selecionada:', folder);
+});
+
+ipcRenderer.invoke('convert-image', 'input.jpg', 'output.png');
+ipcRenderer.invoke('convert-audio', 'input.mp3', 'output.wav');
+ipcRenderer.invoke('convert-document', 'input.docx', 'output.pdf');
