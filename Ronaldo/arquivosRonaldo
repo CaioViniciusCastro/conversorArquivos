@@ -117,16 +117,42 @@ module.exports = { convertDocxToPdf };
 
 const { ipcRenderer } = require('electron');
 
-document.getElementById('COLOQUEOID').addEventListener('click', async () => {
-    const files = await ipcRenderer.invoke('COLOQUEOID');
-    console.log('Arquivos selecionados:', files);
-});
+// Obtém elementos HTML
+const fileInput = document.getElementById('fileInput');
+const fileType = document.getElementById('fileType');
+const convertButton = document.getElementById('convertButton');
+const output = document.getElementById('output');
 
-document.getElementById('COLOQUEOID').addEventListener('click', async () => {
-    const folder = await ipcRenderer.invoke('COLOQUEOID');
-    console.log('Pasta selecionada:', folder);
-});
+// Escuta o clique no botão de conversão
+convertButton.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+        output.textContent = 'Por favor, selecione um arquivo.';
+        return;
+    }
 
-ipcRenderer.invoke('convert-image', 'input.jpg', 'output.png');
-ipcRenderer.invoke('convert-audio', 'input.mp3', 'output.wav');
-ipcRenderer.invoke('convert-document', 'input.docx', 'output.pdf');
+    const inputPath = file.path; // Caminho do arquivo selecionado
+    const type = fileType.value; // Tipo de conversão escolhido
+    const outputPath = `${inputPath.split('.').slice(0, -1).join('.')}.${type}`;
+
+    try {
+        switch (type) {
+            case 'png':
+                await ipcRenderer.invoke('convert-image', inputPath, outputPath);
+                break;
+            case 'pdf':
+                await ipcRenderer.invoke('convert-document', inputPath, outputPath);
+                break;
+            case 'wav':
+                await ipcRenderer.invoke('convert-audio', inputPath, outputPath);
+                break;
+            default:
+                throw new Error('Tipo de conversão inválido.');
+        }
+
+        output.textContent = `Arquivo convertido com sucesso: ${outputPath}`;
+    } catch (error) {
+        output.textContent = `Erro durante a conversão: ${error.message}`;
+    }
+});
+;
