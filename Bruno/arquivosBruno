@@ -1,1 +1,31 @@
+//HTML
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Converter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body >
+   
+    <div id="background">
+        <h1>File Converter</h1>
+        <input type="file" id="fileInput" accept=".txt">
+        <select id="fileType">
+            <option value="json">JSON</option>
+            <option value="pdf">PDF</option>
+            <option value="bat">BAT</option>
+        </select>
+        <button onclick="convertFile()">Convert</button>
+        <pre id="output"></pre>
+    </div>
+  
+    <script src="converter.js"></script>
+   
+</body>
+</html>
+
+//CSS
 
