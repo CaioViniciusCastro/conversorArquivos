@@ -1,0 +1,26 @@
+body, html {
+    height: 100%;
+    margin: 0;
+}
+
+#background {
+    background-image: url('https://programadoresdepre.com.br/wp-content/webp-express/webp-images/uploads/2022/03/conversores-de-arquivos.jpg.webp');
+    background-size: cover;
+    background-position: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+h1, #fileInput, select, button, pre {
+    background-color: rgb(182, 207, 236);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px;
+}
+
+#options{
+    background-color: rgb(9, 48, 131);
+}
